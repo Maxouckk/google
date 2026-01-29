@@ -17,19 +17,31 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
-  // Get user profile
-  const { data: profile } = await supabase
-    .from("users")
-    .select("full_name")
-    .eq("id", user.id)
-    .single()
+  // Fetch profile, merchant accounts, and ads accounts in parallel
+  const [profileResult, merchantResult, adsResult] = await Promise.all([
+    supabase.from("users").select("full_name").eq("id", user.id).single(),
+    supabase
+      .from("merchant_accounts")
+      .select("id, merchant_id, account_name, products_count")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("google_ads_accounts")
+      .select("id, customer_id, account_name, merchant_account_id")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .order("created_at", { ascending: true }),
+  ])
 
   return (
     <DashboardShell
       user={{
         email: user.email || "",
-        full_name: profile?.full_name,
+        full_name: profileResult.data?.full_name,
       }}
+      merchantAccounts={merchantResult.data || []}
+      adsAccounts={adsResult.data || []}
     >
       {children}
     </DashboardShell>

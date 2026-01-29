@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { LogOut, User, Settings, Menu } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { AccountSelector } from "./AccountSelector"
 
 interface HeaderProps {
   user: {
@@ -51,16 +52,16 @@ export function Header({ user, onMenuToggle }: HeaderProps) {
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-card px-4 md:px-6">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="md:hidden"
-        onClick={onMenuToggle}
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
-      <div className="hidden md:block">
-        {/* Placeholder for breadcrumbs or page title */}
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="md:hidden"
+          onClick={onMenuToggle}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        <AccountSelector />
       </div>
 
       <DropdownMenu>

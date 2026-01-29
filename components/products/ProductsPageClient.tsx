@@ -2,34 +2,15 @@
 
 import { useState, useCallback } from "react"
 import { useProducts, type Period, type Product, type TrafficSource } from "@/hooks/useProducts"
+import { useAccount } from "@/contexts/AccountContext"
 import { ProductsTable } from "./ProductsTable"
 import { ProductsFilters } from "./ProductsFilters"
 import { SyncButton } from "./SyncButton"
 import { OptimizeModal } from "./OptimizeModal"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
-interface MerchantAccount {
-  id: string
-  account_name: string | null
-  products_count: number
-}
+export function ProductsPageClient() {
+  const { selectedMerchantId, merchantAccounts } = useAccount()
 
-interface ProductsPageClientProps {
-  merchantAccounts: MerchantAccount[]
-}
-
-export function ProductsPageClient({
-  merchantAccounts,
-}: ProductsPageClientProps) {
-  const [selectedAccount, setSelectedAccount] = useState<string>(
-    merchantAccounts[0]?.id || ""
-  )
   const [period, setPeriod] = useState<Period>("30d")
   const [status, setStatus] = useState("all")
   const [search, setSearch] = useState("")
@@ -40,7 +21,7 @@ export function ProductsPageClient({
   const [optimizeOpen, setOptimizeOpen] = useState(false)
 
   const { products, total, totalPages, loading, refetch } = useProducts({
-    merchantAccountId: selectedAccount || undefined,
+    merchantAccountId: selectedMerchantId || undefined,
     period,
     status,
     search: searchDebounced,
@@ -95,27 +76,11 @@ export function ProductsPageClient({
 
   return (
     <div className="space-y-6">
-      {/* Header with account selector and sync */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        {merchantAccounts.length > 1 && (
-          <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-            <SelectTrigger className="w-[250px]">
-              <SelectValue placeholder="Sélectionner un compte" />
-            </SelectTrigger>
-            <SelectContent>
-              {merchantAccounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
-                  {account.account_name || "Compte"} ({account.products_count}{" "}
-                  produits)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-
-        {selectedAccount && (
+      {/* Sync button */}
+      <div className="flex items-center justify-end">
+        {selectedMerchantId && (
           <SyncButton
-            merchantAccountId={selectedAccount}
+            merchantAccountId={selectedMerchantId}
             onSyncComplete={refetch}
           />
         )}
@@ -150,7 +115,7 @@ export function ProductsPageClient({
       {/* Optimize Modal */}
       <OptimizeModal
         product={optimizeProduct}
-        merchantAccountId={selectedAccount}
+        merchantAccountId={selectedMerchantId}
         open={optimizeOpen}
         onOpenChange={setOptimizeOpen}
         onTitleUpdated={refetch}

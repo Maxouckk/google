@@ -2,15 +2,9 @@
 
 import { useState } from "react"
 import { useTracking } from "@/hooks/useTracking"
+import { useAccount } from "@/contexts/AccountContext"
 import { TrackingTable } from "./TrackingTable"
 import { TrackingFilters } from "./TrackingFilters"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Card,
   CardContent,
@@ -20,25 +14,13 @@ import {
 } from "@/components/ui/card"
 import { BarChart3, TrendingUp, TrendingDown, Minus, Clock } from "lucide-react"
 
-interface MerchantAccount {
-  id: string
-  merchant_id: string
-  account_name: string | null
-}
-
-interface TrackingPageClientProps {
-  merchantAccounts: MerchantAccount[]
-}
-
-export function TrackingPageClient({ merchantAccounts }: TrackingPageClientProps) {
-  const [selectedAccount, setSelectedAccount] = useState<string>(
-    merchantAccounts[0]?.id || ""
-  )
+export function TrackingPageClient() {
+  const { selectedMerchantId, merchantAccounts } = useAccount()
   const [impactStatus, setImpactStatus] = useState("all")
   const [page, setPage] = useState(1)
 
   const { changes, total, totalPages, loading, refetch } = useTracking({
-    merchantAccountId: selectedAccount || undefined,
+    merchantAccountId: selectedMerchantId || undefined,
     impactStatus,
     page,
   })
@@ -77,30 +59,13 @@ export function TrackingPageClient({ merchantAccounts }: TrackingPageClientProps
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Suivi des modifications
-          </h1>
-          <p className="text-muted-foreground">
-            Suivez l&apos;impact de vos optimisations de titres
-          </p>
-        </div>
-
-        {merchantAccounts.length > 1 && (
-          <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-            <SelectTrigger className="w-[250px]">
-              <SelectValue placeholder="Sélectionner un compte" />
-            </SelectTrigger>
-            <SelectContent>
-              {merchantAccounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
-                  {account.account_name || account.merchant_id}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Suivi des modifications
+        </h1>
+        <p className="text-muted-foreground">
+          Suivez l&apos;impact de vos optimisations de titres
+        </p>
       </div>
 
       {/* Summary Cards */}
