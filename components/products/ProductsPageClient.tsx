@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { useProducts, type Period, type Product } from "@/hooks/useProducts"
+import { useProducts, type Period, type Product, type TrafficSource } from "@/hooks/useProducts"
 import { ProductsTable } from "./ProductsTable"
 import { ProductsFilters } from "./ProductsFilters"
 import { SyncButton } from "./SyncButton"
@@ -35,6 +35,7 @@ export function ProductsPageClient({
   const [search, setSearch] = useState("")
   const [searchDebounced, setSearchDebounced] = useState("")
   const [page, setPage] = useState(1)
+  const [trafficSource, setTrafficSource] = useState<TrafficSource>("total")
   const [optimizeProduct, setOptimizeProduct] = useState<Product | null>(null)
   const [optimizeOpen, setOptimizeOpen] = useState(false)
 
@@ -64,6 +65,10 @@ export function ProductsPageClient({
   const handleStatusChange = (newStatus: string) => {
     setStatus(newStatus)
     setPage(1)
+  }
+
+  const handleTrafficSourceChange = (source: TrafficSource) => {
+    setTrafficSource(source)
   }
 
   const handleOptimize = (product: Product) => {
@@ -124,6 +129,8 @@ export function ProductsPageClient({
         onStatusChange={handleStatusChange}
         search={search}
         onSearchChange={handleSearchChange}
+        trafficSource={trafficSource}
+        onTrafficSourceChange={handleTrafficSourceChange}
       />
 
       {/* Table */}
@@ -134,6 +141,7 @@ export function ProductsPageClient({
         totalPages={totalPages}
         pageSize={50}
         period={period}
+        trafficSource={trafficSource}
         loading={loading}
         onPageChange={setPage}
         onOptimize={handleOptimize}

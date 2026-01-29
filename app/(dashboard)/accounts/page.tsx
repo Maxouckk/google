@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { MerchantAccountCard } from "@/components/accounts/MerchantAccountCard"
 import { ConnectMerchantButton } from "@/components/accounts/ConnectMerchantButton"
 import { ConnectGoogleAdsButton } from "@/components/accounts/ConnectGoogleAdsButton"
+import { GoogleAdsAccountCard } from "@/components/accounts/GoogleAdsAccountCard"
 import {
   Card,
   CardContent,
@@ -60,6 +61,7 @@ export default async function AccountsPage({
     no_merchant_accounts: "Aucun compte Merchant Center trouvé",
     oauth_failed: "Erreur lors de la connexion OAuth",
     save_failed: "Erreur lors de l'enregistrement du compte",
+    no_ads_accounts: "Aucun compte Google Ads trouvé",
   }
 
   return (
@@ -135,14 +137,8 @@ export default async function AccountsPage({
 
         {adsAccounts && adsAccounts.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2">
-            {/* TODO: Create GoogleAdsAccountCard component */}
             {adsAccounts.map((account) => (
-              <Card key={account.id}>
-                <CardHeader>
-                  <CardTitle>{account.account_name}</CardTitle>
-                  <CardDescription>{account.google_email}</CardDescription>
-                </CardHeader>
-              </Card>
+              <GoogleAdsAccountCard key={account.id} account={account} />
             ))}
           </div>
         ) : (

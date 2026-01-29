@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react"
-import type { Product, Period } from "@/hooks/useProducts"
+import type { Product, Period, TrafficSource } from "@/hooks/useProducts"
 
 interface ProductsTableProps {
   products: Product[]
@@ -21,6 +21,7 @@ interface ProductsTableProps {
   totalPages: number
   pageSize: number
   period: Period
+  trafficSource: TrafficSource
   loading: boolean
   onPageChange: (page: number) => void
   onOptimize: (product: Product) => void
@@ -42,16 +43,36 @@ function formatNumber(n: number): string {
   return n.toLocaleString("fr-FR")
 }
 
-function getMetrics(product: Product, period: Period) {
+function getMetrics(product: Product, period: Period, trafficSource: TrafficSource) {
   const suffix = period
+
+  if (trafficSource === "free") {
+    return {
+      clicks: product[`free_clicks_${suffix}`] || 0,
+      impressions: product[`free_impressions_${suffix}`] || 0,
+    }
+  }
+
+  if (trafficSource === "ads") {
+    return {
+      clicks: product[`ads_clicks_${suffix}`] || 0,
+      impressions: product[`ads_impressions_${suffix}`] || 0,
+    }
+  }
+
+  // total
   return {
     clicks: product[`total_clicks_${suffix}`] || 0,
-    freeClicks: product[`free_clicks_${suffix}`] || 0,
-    adsClicks: product[`ads_clicks_${suffix}`] || 0,
     impressions:
       (product[`free_impressions_${suffix}`] || 0) +
       (product[`ads_impressions_${suffix}`] || 0),
   }
+}
+
+const sourceLabels: Record<TrafficSource, string> = {
+  total: "Clics",
+  free: "Clics (free)",
+  ads: "Clics (ads)",
 }
 
 export function ProductsTable({
@@ -61,6 +82,7 @@ export function ProductsTable({
   totalPages,
   pageSize,
   period,
+  trafficSource,
   loading,
   onPageChange,
   onOptimize,
@@ -91,7 +113,7 @@ export function ProductsTable({
             <TableRow>
               <TableHead className="w-[60px]">Image</TableHead>
               <TableHead>Titre</TableHead>
-              <TableHead className="w-[100px] text-right">Clics</TableHead>
+              <TableHead className="w-[100px] text-right">{sourceLabels[trafficSource]}</TableHead>
               <TableHead className="w-[100px] text-right">Impressions</TableHead>
               <TableHead className="w-[120px]">Statut</TableHead>
               <TableHead className="w-[100px] text-right">Action</TableHead>
@@ -99,7 +121,7 @@ export function ProductsTable({
           </TableHeader>
           <TableBody>
             {products.map((product) => {
-              const metrics = getMetrics(product, period)
+              const metrics = getMetrics(product, period, trafficSource)
               const statusInfo =
                 statusConfig[product.optimization_status] || statusConfig.original
 

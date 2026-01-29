@@ -83,6 +83,11 @@ export async function POST(
           ? parseFloat(product.price.value)
           : null
 
+        const freeClicks14d = m14?.clicks || 0
+        const freeClicks30d = m30?.clicks || 0
+        const freeClicks90d = m90?.clicks || 0
+        const freeClicks365d = m365?.clicks || 0
+
         const productData = {
           merchant_account_id: account.id,
           google_product_id: googleProductId,
@@ -101,21 +106,26 @@ export async function POST(
           product_type: product.productTypes?.[0] || null,
           availability: product.availability || null,
           condition: product.condition || null,
-          free_clicks_14d: m14?.clicks || 0,
-          free_clicks_30d: m30?.clicks || 0,
-          free_clicks_90d: m90?.clicks || 0,
-          free_clicks_365d: m365?.clicks || 0,
+          free_clicks_14d: freeClicks14d,
+          free_clicks_30d: freeClicks30d,
+          free_clicks_90d: freeClicks90d,
+          free_clicks_365d: freeClicks365d,
           free_impressions_14d: m14?.impressions || 0,
           free_impressions_30d: m30?.impressions || 0,
           free_impressions_90d: m90?.impressions || 0,
           free_impressions_365d: m365?.impressions || 0,
+          // total_clicks = free + ads (ads metrics are synced separately)
+          total_clicks_14d: freeClicks14d,
+          total_clicks_30d: freeClicks30d,
+          total_clicks_90d: freeClicks90d,
+          total_clicks_365d: freeClicks365d,
           last_synced_at: new Date().toISOString(),
         }
 
         // Check if product already exists
         const { data: existing } = await adminSupabase
           .from("products")
-          .select("id, title_original, optimization_status")
+          .select("id, title_original, optimization_status, ads_clicks_14d, ads_clicks_30d, ads_clicks_90d, ads_clicks_365d")
           .eq("merchant_account_id", account.id)
           .eq("google_product_id", googleProductId)
           .single()
@@ -132,6 +142,12 @@ export async function POST(
           ) {
             delete updateData.title_current
           }
+
+          // Recompute total_clicks = free + existing ads
+          updateData.total_clicks_14d = freeClicks14d + (existing.ads_clicks_14d || 0)
+          updateData.total_clicks_30d = freeClicks30d + (existing.ads_clicks_30d || 0)
+          updateData.total_clicks_90d = freeClicks90d + (existing.ads_clicks_90d || 0)
+          updateData.total_clicks_365d = freeClicks365d + (existing.ads_clicks_365d || 0)
 
           await adminSupabase
             .from("products")

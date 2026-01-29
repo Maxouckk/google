@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { exchangeCodeForTokens, getUserInfo } from "@/lib/google/oauth"
 import { encrypt } from "@/lib/encryption"
+import { listAdsCustomerAccounts } from "@/lib/google/ads"
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,13 +16,13 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error("OAuth error:", error)
       return NextResponse.redirect(
-        new URL("/dashboard/accounts?error=oauth_denied", request.url)
+        new URL("/accounts?error=oauth_denied", request.url)
       )
     }
 
     if (!code || !state) {
       return NextResponse.redirect(
-        new URL("/dashboard/accounts?error=missing_params", request.url)
+        new URL("/accounts?error=missing_params", request.url)
       )
     }
 
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     const storedState = request.cookies.get("oauth_state_ads")?.value
     if (!storedState || storedState !== state) {
       return NextResponse.redirect(
-        new URL("/dashboard/accounts?error=invalid_state", request.url)
+        new URL("/accounts?error=invalid_state", request.url)
       )
     }
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
     const userId = state.split(":")[1]
     if (!userId) {
       return NextResponse.redirect(
-        new URL("/dashboard/accounts?error=invalid_state", request.url)
+        new URL("/accounts?error=invalid_state", request.url)
       )
     }
 
@@ -62,37 +63,77 @@ export async function GET(request: NextRequest) {
     // Get user info from Google
     const googleUserInfo = await getUserInfo(accessToken)
 
-    // For Google Ads, we need the customer ID which would typically come from
-    // the Google Ads API. For now, we'll create a placeholder that the user
-    // can update later, or we could prompt for it.
-    // In a real implementation, you'd use the Google Ads API to list accessible accounts.
-
     const adminSupabase = createAdminClient()
 
-    // For now, create a pending entry - in production, you'd fetch actual customer IDs
-    const { error: insertError } = await adminSupabase
-      .from("google_ads_accounts")
-      .insert({
-        user_id: userId,
-        customer_id: "pending", // This would be fetched from Google Ads API
-        account_name: "Google Ads Account",
-        google_email: googleUserInfo.email,
-        access_token_encrypted: encrypt(accessToken),
-        refresh_token_encrypted: encrypt(refreshToken),
-        token_expires_at: expiresAt.toISOString(),
-        is_active: true,
-      })
+    // Fetch accessible Google Ads customer accounts
+    let customerAccounts: { customerId: string; descriptiveName: string }[] = []
+    try {
+      customerAccounts = await listAdsCustomerAccounts(accessToken)
+    } catch (adsError) {
+      console.error("Failed to list Ads accounts:", adsError)
+      // Fallback: create a single entry that user can configure
+      customerAccounts = [
+        { customerId: "pending", descriptiveName: "Google Ads Account" },
+      ]
+    }
 
-    if (insertError) {
-      console.error("Failed to save Google Ads account:", insertError)
+    if (customerAccounts.length === 0) {
       return NextResponse.redirect(
-        new URL("/dashboard/accounts?error=save_failed", request.url)
+        new URL("/accounts?error=no_ads_accounts", request.url)
       )
+    }
+
+    // Get user's merchant accounts to try to link
+    const { data: merchantAccounts } = await adminSupabase
+      .from("merchant_accounts")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .limit(1)
+
+    const merchantAccountId = merchantAccounts?.[0]?.id || null
+
+    // Insert all found customer accounts
+    for (const account of customerAccounts) {
+      // Check if this customer_id already exists for this user
+      const { data: existing } = await adminSupabase
+        .from("google_ads_accounts")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("customer_id", account.customerId)
+        .single()
+
+      if (existing) {
+        // Update existing account tokens
+        await adminSupabase
+          .from("google_ads_accounts")
+          .update({
+            access_token_encrypted: encrypt(accessToken),
+            refresh_token_encrypted: encrypt(refreshToken),
+            token_expires_at: expiresAt.toISOString(),
+            is_active: true,
+            account_name: account.descriptiveName,
+            google_email: googleUserInfo.email,
+          })
+          .eq("id", existing.id)
+      } else {
+        await adminSupabase.from("google_ads_accounts").insert({
+          user_id: userId,
+          merchant_account_id: merchantAccountId,
+          customer_id: account.customerId,
+          account_name: account.descriptiveName,
+          google_email: googleUserInfo.email,
+          access_token_encrypted: encrypt(accessToken),
+          refresh_token_encrypted: encrypt(refreshToken),
+          token_expires_at: expiresAt.toISOString(),
+          is_active: true,
+        })
+      }
     }
 
     // Clear the state cookie
     const response = NextResponse.redirect(
-      new URL("/dashboard/accounts?success=ads_connected", request.url)
+      new URL("/accounts?success=ads_connected", request.url)
     )
     response.cookies.delete("oauth_state_ads")
 
@@ -100,7 +141,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Ads OAuth callback error:", error)
     return NextResponse.redirect(
-      new URL("/dashboard/accounts?error=oauth_failed", request.url)
+      new URL("/accounts?error=oauth_failed", request.url)
     )
   }
 }

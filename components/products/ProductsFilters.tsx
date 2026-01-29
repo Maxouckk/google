@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Search } from "lucide-react"
-import type { Period } from "@/hooks/useProducts"
+import type { Period, TrafficSource } from "@/hooks/useProducts"
 
 interface ProductsFiltersProps {
   period: Period
@@ -19,6 +19,8 @@ interface ProductsFiltersProps {
   onStatusChange: (status: string) => void
   search: string
   onSearchChange: (search: string) => void
+  trafficSource: TrafficSource
+  onTrafficSourceChange: (source: TrafficSource) => void
 }
 
 const periods: { value: Period; label: string }[] = [
@@ -35,6 +37,8 @@ export function ProductsFilters({
   onStatusChange,
   search,
   onSearchChange,
+  trafficSource,
+  onTrafficSourceChange,
 }: ProductsFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-4">
@@ -51,6 +55,18 @@ export function ProductsFilters({
           </Button>
         ))}
       </div>
+
+      {/* Traffic source filter */}
+      <Select value={trafficSource} onValueChange={(v) => onTrafficSourceChange(v as TrafficSource)}>
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="Source" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="total">Total</SelectItem>
+          <SelectItem value="free">Free listings</SelectItem>
+          <SelectItem value="ads">Google Ads</SelectItem>
+        </SelectContent>
+      </Select>
 
       {/* Status filter */}
       <Select value={status} onValueChange={onStatusChange}>

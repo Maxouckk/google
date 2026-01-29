@@ -43,6 +43,7 @@ export interface Product {
 }
 
 export type Period = "14d" | "30d" | "90d" | "365d"
+export type TrafficSource = "total" | "free" | "ads"
 
 interface UseProductsOptions {
   merchantAccountId?: string
