@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { LogOut, User, Settings } from "lucide-react"
+import { LogOut, User, Settings, Menu } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 
@@ -21,9 +21,10 @@ interface HeaderProps {
     email: string
     full_name?: string | null
   }
+  onMenuToggle?: () => void
 }
 
-export function Header({ user }: HeaderProps) {
+export function Header({ user, onMenuToggle }: HeaderProps) {
   const router = useRouter()
 
   const handleSignOut = async () => {
@@ -49,8 +50,16 @@ export function Header({ user }: HeaderProps) {
     : user.email.slice(0, 2).toUpperCase()
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-card px-6">
-      <div>
+    <header className="flex h-16 items-center justify-between border-b bg-card px-4 md:px-6">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="md:hidden"
+        onClick={onMenuToggle}
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
+      <div className="hidden md:block">
         {/* Placeholder for breadcrumbs or page title */}
       </div>
 
@@ -77,13 +86,13 @@ export function Header({ user }: HeaderProps) {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings" className="cursor-pointer">
+            <Link href="/settings" className="cursor-pointer">
               <User className="mr-2 h-4 w-4" />
               Mon profil
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings" className="cursor-pointer">
+            <Link href="/settings" className="cursor-pointer">
               <Settings className="mr-2 h-4 w-4" />
               Paramètres
             </Link>

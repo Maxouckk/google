@@ -84,7 +84,7 @@ export function ProductsPageClient({
           Connectez un compte Google Merchant Center pour voir vos produits.
         </p>
         <a
-          href="/dashboard/accounts"
+          href="/accounts"
           className="mt-4 inline-block text-primary hover:underline"
         >
           Aller dans Comptes

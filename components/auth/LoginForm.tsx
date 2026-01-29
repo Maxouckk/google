@@ -41,7 +41,7 @@ export function LoginForm() {
       }
 
       toast.success("Connexion réussie")
-      router.push("/dashboard/products")
+      router.push("/products")
       router.refresh()
     } catch {
       toast.error("Une erreur est survenue")

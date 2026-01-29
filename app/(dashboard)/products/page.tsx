@@ -46,7 +46,7 @@ export default async function ProductsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <Link href="/dashboard/accounts">
+            <Link href="/accounts">
               <Button>Connecter un compte</Button>
             </Link>
           </CardContent>

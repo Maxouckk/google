@@ -16,13 +16,13 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error("OAuth error:", error)
       return NextResponse.redirect(
-        new URL("/dashboard/accounts?error=oauth_denied", request.url)
+        new URL("/accounts?error=oauth_denied", request.url)
       )
     }
 
     if (!code || !state) {
       return NextResponse.redirect(
-        new URL("/dashboard/accounts?error=missing_params", request.url)
+        new URL("/accounts?error=missing_params", request.url)
       )
     }
 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const storedState = request.cookies.get("oauth_state")?.value
     if (!storedState || storedState !== state) {
       return NextResponse.redirect(
-        new URL("/dashboard/accounts?error=invalid_state", request.url)
+        new URL("/accounts?error=invalid_state", request.url)
       )
     }
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     const userId = state.split(":")[1]
     if (!userId) {
       return NextResponse.redirect(
-        new URL("/dashboard/accounts?error=invalid_state", request.url)
+        new URL("/accounts?error=invalid_state", request.url)
       )
     }
 
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     if (merchantAccounts.length === 0) {
       return NextResponse.redirect(
-        new URL("/dashboard/accounts?error=no_merchant_accounts", request.url)
+        new URL("/accounts?error=no_merchant_accounts", request.url)
       )
     }
 
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
 
     // Clear the state cookie
     const response = NextResponse.redirect(
-      new URL("/dashboard/accounts?success=merchant_connected", request.url)
+      new URL("/accounts?success=merchant_connected", request.url)
     )
     response.cookies.delete("oauth_state")
 
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Merchant OAuth callback error:", error)
     return NextResponse.redirect(
-      new URL("/dashboard/accounts?error=oauth_failed", request.url)
+      new URL("/accounts?error=oauth_failed", request.url)
     )
   }
 }
