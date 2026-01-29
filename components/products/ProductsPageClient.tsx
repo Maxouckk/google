@@ -5,6 +5,7 @@ import { useProducts, type Period, type Product } from "@/hooks/useProducts"
 import { ProductsTable } from "./ProductsTable"
 import { ProductsFilters } from "./ProductsFilters"
 import { SyncButton } from "./SyncButton"
+import { OptimizeModal } from "./OptimizeModal"
 import {
   Select,
   SelectContent,
@@ -12,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { toast } from "sonner"
 
 interface MerchantAccount {
   id: string
@@ -35,6 +35,8 @@ export function ProductsPageClient({
   const [search, setSearch] = useState("")
   const [searchDebounced, setSearchDebounced] = useState("")
   const [page, setPage] = useState(1)
+  const [optimizeProduct, setOptimizeProduct] = useState<Product | null>(null)
+  const [optimizeOpen, setOptimizeOpen] = useState(false)
 
   const { products, total, totalPages, loading, refetch } = useProducts({
     merchantAccountId: selectedAccount || undefined,
@@ -45,17 +47,14 @@ export function ProductsPageClient({
   })
 
   // Debounce search
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setSearch(value)
-      const timeout = setTimeout(() => {
-        setSearchDebounced(value)
-        setPage(1)
-      }, 300)
-      return () => clearTimeout(timeout)
-    },
-    []
-  )
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value)
+    const timeout = setTimeout(() => {
+      setSearchDebounced(value)
+      setPage(1)
+    }, 300)
+    return () => clearTimeout(timeout)
+  }, [])
 
   const handlePeriodChange = (newPeriod: Period) => {
     setPeriod(newPeriod)
@@ -68,8 +67,8 @@ export function ProductsPageClient({
   }
 
   const handleOptimize = (product: Product) => {
-    // TODO: Open optimize modal (Phase 4)
-    toast.info(`Optimisation de "${product.title_current}" - bientôt disponible`)
+    setOptimizeProduct(product)
+    setOptimizeOpen(true)
   }
 
   if (merchantAccounts.length === 0) {
@@ -79,7 +78,10 @@ export function ProductsPageClient({
         <p className="mt-1 text-muted-foreground">
           Connectez un compte Google Merchant Center pour voir vos produits.
         </p>
-        <a href="/dashboard/accounts" className="mt-4 inline-block text-primary hover:underline">
+        <a
+          href="/dashboard/accounts"
+          className="mt-4 inline-block text-primary hover:underline"
+        >
           Aller dans Comptes
         </a>
       </div>
@@ -135,6 +137,15 @@ export function ProductsPageClient({
         loading={loading}
         onPageChange={setPage}
         onOptimize={handleOptimize}
+      />
+
+      {/* Optimize Modal */}
+      <OptimizeModal
+        product={optimizeProduct}
+        merchantAccountId={selectedAccount}
+        open={optimizeOpen}
+        onOpenChange={setOptimizeOpen}
+        onTitleUpdated={refetch}
       />
     </div>
   )
