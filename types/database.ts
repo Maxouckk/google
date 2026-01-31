@@ -431,6 +431,41 @@ export interface Database {
           }
         ]
       }
+      user_google_credentials: {
+        Row: {
+          id: string
+          user_id: string
+          google_client_id_encrypted: string
+          google_client_secret_encrypted: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          google_client_id_encrypted: string
+          google_client_secret_encrypted: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          google_client_id_encrypted?: string
+          google_client_secret_encrypted?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_google_credentials_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       ai_generation_logs: {
         Row: {
           id: string

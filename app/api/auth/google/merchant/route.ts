@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getMerchantAuthUrl } from "@/lib/google/oauth"
+import { getUserGoogleCredentials } from "@/lib/google/user-credentials"
 import crypto from "crypto"
 
 export async function GET() {
@@ -15,11 +16,21 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // Fetch user's own Google OAuth credentials
+    let credentials
+    try {
+      credentials = await getUserGoogleCredentials(user.id)
+    } catch {
+      return NextResponse.redirect(
+        new URL("/accounts?error=no_credentials", process.env.NEXT_PUBLIC_APP_URL!)
+      )
+    }
+
     // Generate a state parameter with user ID for security
     const state = crypto.randomBytes(16).toString("hex") + ":" + user.id
 
     // Store state in a cookie for verification
-    const authUrl = getMerchantAuthUrl(state)
+    const authUrl = getMerchantAuthUrl(state, credentials)
 
     const response = NextResponse.redirect(authUrl)
     response.cookies.set("oauth_state", state, {

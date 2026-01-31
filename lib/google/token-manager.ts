@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { encrypt, decrypt } from "@/lib/encryption"
 import { refreshAccessToken } from "./oauth"
+import { getUserGoogleCredentials } from "./user-credentials"
 
 const TOKEN_REFRESH_THRESHOLD_MS = 5 * 60 * 1000 // 5 minutes
 
@@ -26,9 +27,12 @@ export async function getValidAccessToken(
   if (expiresAt.getTime() - now.getTime() < TOKEN_REFRESH_THRESHOLD_MS) {
     const refreshToken = decrypt(account.refresh_token_encrypted)
 
+    // Get user's OAuth credentials for the refresh
+    const credentials = await getUserGoogleCredentials(account.user_id)
+
     try {
       const { accessToken, expiresAt: newExpiresAt } =
-        await refreshAccessToken(refreshToken)
+        await refreshAccessToken(refreshToken, credentials)
 
       // Update tokens in database
       await supabase
@@ -80,9 +84,12 @@ export async function getValidAdsAccessToken(
   if (expiresAt.getTime() - now.getTime() < TOKEN_REFRESH_THRESHOLD_MS) {
     const refreshToken = decrypt(account.refresh_token_encrypted)
 
+    // Get user's OAuth credentials for the refresh
+    const credentials = await getUserGoogleCredentials(account.user_id)
+
     try {
       const { accessToken, expiresAt: newExpiresAt } =
-        await refreshAccessToken(refreshToken)
+        await refreshAccessToken(refreshToken, credentials)
 
       // Update tokens in database
       await supabase

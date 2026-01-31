@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { exchangeCodeForTokens, getUserInfo } from "@/lib/google/oauth"
+import { getUserGoogleCredentials } from "@/lib/google/user-credentials"
 import { encrypt } from "@/lib/encryption"
 import { listAdsCustomerAccounts } from "@/lib/google/ads"
 
@@ -54,14 +55,20 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Fetch user's own Google OAuth credentials
+    const credentials = await getUserGoogleCredentials(user.id)
+
+    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/google/ads/callback`
+
     // Exchange code for tokens
     const { accessToken, refreshToken, expiresAt } = await exchangeCodeForTokens(
       code,
-      process.env.GOOGLE_REDIRECT_URI_ADS!
+      redirectUri,
+      credentials
     )
 
     // Get user info from Google
-    const googleUserInfo = await getUserInfo(accessToken)
+    const googleUserInfo = await getUserInfo(accessToken, credentials)
 
     const adminSupabase = createAdminClient()
 
